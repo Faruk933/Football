@@ -78,6 +78,50 @@ Rules:
 
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
+
+def post_to_buffer(text, image_url):
+    api_key = os.environ["BUFFER_API_KEY"]
+    channel_id = os.environ["BUFFER_CHANNEL_ID"]
+
+    response = requests.post(
+        "https://api.buffer.com",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "query": """
+            mutation CreatePost($input: CreatePostInput!) {
+                createPost(input: $input) {
+                    ... on Post {
+                        id
+                    }
+                    ... on MutationError {
+                        message
+                    }
+                }
+            }
+            """,
+            "variables": {
+                "input": {
+                    "channelId": channel_id,
+                    "text": text,
+                    "assets": [
+                        {
+                            "url": image_url,
+                            "type": "IMAGE"
+                        }
+                    ]
+                }
+            }
+        },
+        timeout=30,
+    )
+
+    response.raise_for_status()
+    return response.json()
+
+
 def load_posted():
     if not DATA_FILE.exists():
         return []
@@ -156,3 +200,13 @@ if __name__ == "__main__":
         print(f"\n{item['title']}")
         print(item["url"])
         print("IMAGE:", item["image_url"])
+
+        caption = generate_caption(item["title"], item["url"])
+        print("CAPTION:", caption)
+
+        result = post_to_buffer(caption, item["image_url"])
+        print("BUFFER:", result)
+
+        posted = load_posted()
+        posted.append(item)
+        save_posted(posted)
