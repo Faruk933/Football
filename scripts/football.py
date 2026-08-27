@@ -64,7 +64,11 @@ Rules:
 
     response = requests.post(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-        params={"key": api_key},
+        headers={
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key,
+        },
+        
         json={
             "contents": [
                 {"parts": [{"text": prompt}]}
