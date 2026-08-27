@@ -1,0 +1,69 @@
+name: Get Buffer Channel ID
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-channel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Buffer channels
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          import requests
+
+          headers = {
+              "Content-Type": "application/json",
+              "Authorization": f"Bearer {os.environ['BUFFER_API_KEY']}"
+          }
+
+          q1 = """
+          query {
+            account {
+              organizations { id }
+            }
+          }
+          """
+
+          r = requests.post(
+              "https://api.buffer.com",
+              headers=headers,
+              json={"query": q1}
+          )
+          r.raise_for_status()
+          orgs = r.json()["data"]["account"]["organizations"]
+
+          for org in orgs:
+              print("ORGANIZATION:", org["id"])
+
+              q2 = f"""
+              query {{
+                channels(input: {{ organizationId: "{org['id']}" }}) {{
+                  id
+                  name
+                  displayName
+                  service
+                }}
+              }}
+              """
+
+              r = requests.post(
+                  "https://api.buffer.com",
+                  headers=headers,
+                  json={"query": q2}
+              )
+              r.raise_for_status()
+
+              for channel in r.json()["data"]["channels"]:
+                  print(
+                      "CHANNEL:",
+                      channel["id"],
+                      "|",
+                      channel.get("displayName") or channel.get("name"),
+                      "|",
+                      channel["service"]
+                  )
+          PY
