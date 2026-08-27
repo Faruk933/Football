@@ -46,7 +46,7 @@ def get_article_image(url):
 
 
 def generate_caption(title, url):
-    api_key = os.environ["GEMINI_API_KEY"]
+    api_key = os.environ["GROQ_API_KEY"]
 
     prompt = f"""
 Write an engaging football news post for X.
@@ -63,16 +63,16 @@ Rules:
 """
 
     response = requests.post(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+        "https://api.groq.com/openai/v1/chat/completions",
         headers={
             "Content-Type": "application/json",
-            "x-goog-api-key": api_key,
+            "Authorization": f"Bearer {api_key}",
         },
-        
         json={
-            "contents": [
-                {"parts": [{"text": prompt}]}
-            ]
+            "model": "llama-3.1-8b-instant",
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
         },
         timeout=30,
     )
@@ -80,7 +80,7 @@ Rules:
     response.raise_for_status()
     data = response.json()
 
-    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    return data["choices"][0]["message"]["content"].strip()
 
 
 def post_to_buffer(text, image_url):
