@@ -80,7 +80,21 @@ Rules:
     response.raise_for_status()
     data = response.json()
 
-    return data["choices"][0]["message"]["content"].strip()
+    generated = data["choices"][0]["message"]["content"].strip()
+
+    # Keep the complete X post within 280 characters, including the URL.
+    url_line = url.strip()
+    prefix = generated.split(url_line)[0].strip() if url_line in generated else generated
+    prefix = " ".join(prefix.split())
+    max_prefix = 280 - len(url_line) - 1
+
+    if max_prefix < 1:
+        return url_line[:280]
+
+    if len(prefix) > max_prefix:
+        prefix = prefix[:max_prefix].rsplit(" ", 1)[0].rstrip()
+
+    return f"{prefix}\n{url_line}"
 
 
 def post_to_buffer(text, image_url):
