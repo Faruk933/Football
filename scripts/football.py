@@ -112,6 +112,8 @@ def post_to_buffer(text, image_url):
                 "input": {
                     "channelId": channel_id,
                     "text": text,
+                    "schedulingType": "automatic",
+                    "mode": "addToQueue",
                     "assets": [
                         {
                             "image": {
