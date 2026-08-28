@@ -97,8 +97,10 @@ def post_to_buffer(text, image_url):
             "query": """
             mutation CreatePost($input: CreatePostInput!) {
                 createPost(input: $input) {
-                    ... on Post {
-                        id
+                    ... on PostActionSuccess {
+                        post {
+                            id
+                        }
                     }
                     ... on MutationError {
                         message
@@ -112,8 +114,9 @@ def post_to_buffer(text, image_url):
                     "text": text,
                     "assets": [
                         {
-                            "url": image_url,
-                            "type": "IMAGE"
+                            "image": {
+                                "url": image_url
+                            }
                         }
                     ]
                 }
